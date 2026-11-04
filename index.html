@@ -189,9 +189,9 @@ const ITEMS = Object.freeze([
  {id:'luck',name:'Better luck next time',type:'luck',tint:'#c3ecf6',lines:['Better luck','next time']}
 ]);
 const PRIZES=ITEMS.filter(i=>i.type==='prize');
-const BASE_ORDER=['tote','retry','bottle','sticker','luck','notebook','retry','sticker'];
+const BASE_ORDER=['tote','retry','bottle','sticker','luck','tote','notebook','sticker','retry','sticker'];
 const PALETTE=['#ccf6c5','#ffe7a5','#c3ecf6','#4285f4','#f8d8d8','#f9ab00','#ccf6c5','#ea4335'];
-const initial={sound:true,music:false,volume:.55,motion:!motionQuery.matches,stock:{tote:null,bottle:null,notebook:null,sticker:null},weights:{tote:1,bottle:1,notebook:1,sticker:2,retry:2,luck:1},wins:{tote:0,bottle:0,notebook:0,sticker:0},spins:0};
+const initial={sound:true,music:false,volume:.55,motion:!motionQuery.matches,stock:{tote:null,bottle:null,notebook:null,sticker:null},weights:{tote:2,bottle:1,notebook:1,sticker:3,retry:2,luck:1},wins:{tote:0,bottle:0,notebook:0,sticker:0},spins:0,oddsPresetVersion:1};
 let settings=loadSettings(),state='idle',slots=[],step=45,angle=0,spin=null,closed=false;
 let lastFrame=performance.now(),lastTick=0,lastCountdown=-1,resultDeadline=0,resultItem=null,toastTimer=0,speechTimer=0,storageWarning=false;
 let particles=[],raf=0,burstUntil=0,nextBurst=0,previousFocus=null;
@@ -219,6 +219,13 @@ function loadSettings(){
  if(d.weights&&ITEMS.every(p=>Number.isInteger(d.weights[p.id])&&d.weights[p.id]>=0&&d.weights[p.id]<=4)){
   const sum=Object.values(d.weights).reduce((a,b)=>a+b,0);
   if(sum>=2&&sum<=12&&PRIZES.some(p=>d.weights[p.id]>0))v.weights=Object.fromEntries(ITEMS.map(p=>[p.id,d.weights[p.id]]));
+ }
+ // Upgrade the old default odds once, without clearing stock, wins or preferences.
+ // Explicit custom slice counts are retained. The version marker also lets a
+ // host deliberately choose the former counts later without another migration.
+ const previousDefault={tote:1,bottle:1,notebook:1,sticker:2,retry:2,luck:1};
+ if(d.oddsPresetVersion!==1&&ITEMS.every(p=>v.weights[p.id]===previousDefault[p.id])){
+  v.weights=clone(initial.weights);
  }
  return v;
 }
